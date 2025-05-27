@@ -135,6 +135,32 @@ BTreeNode *insert(BTreeNode *root, Curriculo key){
     return root;
 }
 
+int contatoExiste(BTreeNode *node, const char *contato){
+    if (node == NULL) {
+        return 0;
+    }
+
+    for (int i = 0; i < node->n; i++){
+        if(strcmp(node->keys[i].contato, contato) == 0) {
+            return 1;
+        }
+
+        if(!node->leaf){
+            if (contatoExiste(node->children[i], contato)){
+                return 1;
+            }
+        }
+    }
+
+    if (!node->leaf && node->children[node->n] != NULL){
+        if (contatoExiste(node->children[node->n], contato)){
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 void insertCurriculo(BTreeNode **root){
     char nome[100], area[50], qualificacoes[200], experiencia[200], contato [100];
 
@@ -160,20 +186,43 @@ void insertCurriculo(BTreeNode **root){
     fgets(contato, sizeof(contato), stdin);
     contato[strcspn(contato, "\n")] = '\0';
 
+    if(contatoExiste(*root, contato)){
+        printf("Contato já existente no sistema!");
+        return;
+    }
+
     Curriculo newCurriculo = createCurriculo(nome, area, qualificacoes, experiencia, contato);
     *root = insert(*root, newCurriculo);
 
     printf("Currículo adicionado");
 }
 
+void buscarNome(BTreeNode *root, const char *nome){
+    if (root == NULL){
+        return;
+    }
+
+    for (int i = 0; i < root->n; i++){
+        if (stricmp(root->keys[i].nome, nome) == 0){
+            printf("\nEncontrado\n");
+            printf("Nome: %s, Area: %s, Qualificações: %s, Experiência: %s, Contato: %s\n",root->keys[i].nome,
+                   root->keys[i].area, root->keys[i].qualificacoes, root->keys[i].experiencia, root->keys[i].contato);
+        }
+        if (!root->leaf) buscarNome(root->children[i], nome);
+    }
+    if (!root->leaf) buscarNome(root->children[root->n], nome);
+}
+
 void menu_principal(BTreeNode *root){
 
     int opcao;
+    char busca[100];
 
     do {
         printf("\n--Menu--\n");
         printf("1 - Adicionar currículo\n");
         printf("2 - Exibir currículos\n");
+        printf("3 - Buscar por nome\n");
         printf("0 - Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
@@ -186,6 +235,12 @@ void menu_principal(BTreeNode *root){
             case 2:
                 printf("Árvore organizado por nome\n");
                 traverse(root);
+                break;
+            case 3:
+                printf("Digite o nome: ");
+                fgets(busca, sizeof(busca), stdin);
+                busca[strcspn(busca, "\n")] = '\0';
+                buscarNome(root, busca);
                 break;
             case 0:
                 printf("Saindo..");
