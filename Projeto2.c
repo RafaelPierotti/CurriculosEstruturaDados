@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <stdbool.h>
 
 #define M 4
 
@@ -197,20 +198,26 @@ void insertCurriculo(BTreeNode **root){
     printf("Currículo adicionado");
 }
 
-void buscarNome(BTreeNode *root, const char *nome){
+void buscarNome(BTreeNode *root, const char *nome, bool *encontrado){
     if (root == NULL){
         return;
     }
 
     for (int i = 0; i < root->n; i++){
-        if (stricmp(root->keys[i].nome, nome) == 0){
-            printf("\nEncontrado\n");
+        if (!root->leaf){
+            buscarNome(root->children[i], nome, encontrado);
+        }
+
+        if (strnicmp(root->keys[i].nome, nome, strlen(nome)) == 0){
             printf("Nome: %s, Area: %s, Qualificações: %s, Experiência: %s, Contato: %s\n",root->keys[i].nome,
                    root->keys[i].area, root->keys[i].qualificacoes, root->keys[i].experiencia, root->keys[i].contato);
+            *encontrado = true;
         }
-        if (!root->leaf) buscarNome(root->children[i], nome);
     }
-    if (!root->leaf) buscarNome(root->children[root->n], nome);
+
+    if (!root->leaf){
+        buscarNome(root->children[root->n], nome, encontrado);
+    }
 }
 
 void menu_principal(BTreeNode *root){
@@ -240,7 +247,13 @@ void menu_principal(BTreeNode *root){
                 printf("Digite o nome: ");
                 fgets(busca, sizeof(busca), stdin);
                 busca[strcspn(busca, "\n")] = '\0';
-                buscarNome(root, busca);
+
+                bool encontrado = false;
+                buscarNome(root, busca, &encontrado);
+
+                if (!encontrado){
+                    printf("Nenhum currículo encontrado!\n");
+                }
                 break;
             case 0:
                 printf("Saindo..");
