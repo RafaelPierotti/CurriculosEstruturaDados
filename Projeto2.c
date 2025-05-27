@@ -49,8 +49,8 @@ void traverse(BTreeNode *root){
             if (!root->leaf){
                 traverse(root->children[i]);
             }
-            printf("Nome: %s, Area: %s, Qualificações: %s, Experiência: %s, Contato: %s",root->keys[i].nome,
-                   root->keys[i].qualificacoes, root->keys[i].experiencia, root->keys[i].contato);
+            printf("Nome: %s, Area: %s, Qualificações: %s, Experiência: %s, Contato: %s\n",root->keys[i].nome,
+                   root->keys[i].area, root->keys[i].qualificacoes, root->keys[i].experiencia, root->keys[i].contato);
             fflush(stdout);
 
         }
@@ -92,14 +92,15 @@ void insertNonFull(BTreeNode *node, Curriculo key){
     int i = node->n - 1;
 
     if(node->leaf){
-        while (i >= 0 && strcmp(key.nome, node->keys[i].nome) < 0){
+
+        while (i >= 0 && stricmp(key.nome, node->keys[i].nome) < 0){
             node->keys[i + 1] = node->keys[i];
             i--;
         }
         node->keys[i + 1] = key;
         node->n++;
     } else {
-        while (i >= 0 && strcmp(key.nome, node->keys[i].nome) < 0){
+        while (i >= 0 && stricmp(key.nome, node->keys[i].nome) < 0){
             i--;
         }
         i++;
@@ -124,7 +125,7 @@ BTreeNode *insert(BTreeNode *root, Curriculo key){
             newRoot->children[0] = root;
             splitChild(newRoot, 0, root);
 
-            int i = (strcmp(key.nome, newRoot->keys[0].nome) > 0) ? 1 : 0;
+            int i = (stricmp(key.nome, newRoot->keys[0].nome) > 0) ? 1 : 0;
             insertNonFull(newRoot->children[i], key);
             root = newRoot;
         } else {
@@ -134,11 +135,68 @@ BTreeNode *insert(BTreeNode *root, Curriculo key){
     return root;
 }
 
-int main (){
-    setlocale(LC_ALL, "Portuguese");
+void insertCurriculo(BTreeNode **root){
+    char nome[100], area[50], qualificacoes[200], experiencia[200], contato [100];
 
-    BTreeNode *root = NULL;
+    printf("Insira as informações do currículo\n");
 
+    printf("Nome: ");
+    fgets(nome, sizeof(nome), stdin);
+    nome[strcspn(nome, "\n")] = '\0';
+
+    printf("Área: ");
+    fgets(area, sizeof(area), stdin);
+    area[strcspn(area, "\n")] = '\0';
+
+    printf("Qualificações: ");
+    fgets(qualificacoes, sizeof(qualificacoes), stdin);
+    qualificacoes[strcspn(qualificacoes, "\n")] = '\0';
+
+    printf("Experiência: ");
+    fgets(experiencia, sizeof(experiencia), stdin);
+    experiencia[strcspn(experiencia, "\n")] = '\0';
+
+    printf("Contato: ");
+    fgets(contato, sizeof(contato), stdin);
+    contato[strcspn(contato, "\n")] = '\0';
+
+    Curriculo newCurriculo = createCurriculo(nome, area, qualificacoes, experiencia, contato);
+    *root = insert(*root, newCurriculo);
+
+    printf("Currículo adicionado");
+}
+
+void menu_principal(BTreeNode *root){
+
+    int opcao;
+
+    do {
+        printf("\n--Menu--\n");
+        printf("1 - Adicionar currículo\n");
+        printf("2 - Exibir currículos\n");
+        printf("0 - Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+        getchar();
+
+        switch(opcao){
+            case 1:
+                insertCurriculo(&root);
+                break;
+            case 2:
+                printf("Árvore organizado por nome\n");
+                traverse(root);
+                break;
+            case 0:
+                printf("Saindo..");
+                break;
+            default:
+                printf("Opção inválida");
+        }
+    } while (opcao != 0);
+}
+
+void adicionaExemplos(BTreeNode **root){
     Curriculo curriculos[] = {
         createCurriculo("Carlos", "Engenharia", "AutoCAD", "5 anos", "carlos@email.com"),
         createCurriculo("Bruno", "Marketing", "SEO, Copy", "2 anos", "bruno@email.com"),
@@ -149,15 +207,18 @@ int main (){
     int n = sizeof(curriculos) / sizeof(curriculos[0]);
 
     for (int i = 0; i < n; i++){
-        root = insert(root, curriculos[i]);
+        *root = insert(*root, curriculos[i]);
     }
+}
 
-    printf("Árvore B organizando por nome: \n");
-    fflush(stdout);
-    traverse(root);
-    printf("\n");
-    fflush(stdout);
+int main (){
+    setlocale(LC_ALL, "Portuguese");
 
+    BTreeNode *root = NULL;
+
+    adicionaExemplos(&root);
+
+    menu_principal(root);
 
     return 0;
 }
